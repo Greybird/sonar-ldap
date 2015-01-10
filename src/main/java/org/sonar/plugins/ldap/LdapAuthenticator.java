@@ -22,7 +22,7 @@ package org.sonar.plugins.ldap;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.security.LoginPasswordAuthenticator;
+import org.sonar.api.security.Authenticator;
 
 import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
@@ -36,15 +36,17 @@ import java.util.Map;
 /**
  * @author Evgeny Mandrikov
  */
-public class LdapAuthenticator implements LoginPasswordAuthenticator {
+public class LdapAuthenticator extends Authenticator {
 
   private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticator.class);
   private final Map<String, LdapContextFactory> contextFactories;
   private final Map<String, LdapUserMapping> userMappings;
+  private final ReverseProxySettings reverseProxySettings;
 
-  public LdapAuthenticator(Map<String, LdapContextFactory> contextFactories, Map<String, LdapUserMapping> userMappings) {
-    this.contextFactories = contextFactories;
-    this.userMappings = userMappings;
+  public LdapAuthenticator(LdapSettingsManager settingsManager) {
+    this.contextFactories = settingsManager.getContextFactories();
+    this.userMappings = settingsManager.getUserMappings();
+    this.reverseProxySettings = settingsManager.getReverseProxySettings();
   }
 
   public void init() {
@@ -55,9 +57,10 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
    * Authenticate the user against LDAP servers until first success.
    * @param login The login to use.
    * @param password The password to use.
+   * @param checkPassword Indicates if the password must be checked
    * @return false if specified user cannot be authenticated with specified password on any LDAP server
    */
-  public boolean authenticate(String login, String password) {
+  public boolean authenticate(String login, String password, boolean checkPassword) {
     for (String ldapKey : userMappings.keySet()) {
       final String principal;
       if (contextFactories.get(ldapKey).isSasl()) {
@@ -75,6 +78,9 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
           continue;
         }
         principal = result.getNameInNamespace();
+      }
+      if (!checkPassword) {
+        return true;
       }
       boolean passwordValid;
       if (contextFactories.get(ldapKey).isGssapi()) {
@@ -127,4 +133,18 @@ public class LdapAuthenticator implements LoginPasswordAuthenticator {
     return true;
   }
 
+  @Override
+  public boolean doAuthenticate(Context context) {
+    String username = context.getUsername();
+    String password = context.getPassword();
+    boolean checkPassword = true;
+    String reverseProxyUsername = reverseProxySettings.getReverseProxyUserName(context.getRequest());
+    if (reverseProxyUsername != null) {
+      username = reverseProxyUsername;
+      password = null;
+      checkPassword = false;
+    }
+    boolean authenticated = authenticate(username, password, checkPassword);
+    return authenticated;
+  }
 }

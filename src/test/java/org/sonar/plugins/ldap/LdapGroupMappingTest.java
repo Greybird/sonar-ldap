@@ -45,8 +45,8 @@ public class LdapGroupMappingTest {
   @Test
   public void backward_compatibility() {
     Settings settings = new Settings()
-        .setProperty("ldap.group.objectClass", "group")
-        .setProperty("ldap.group.memberAttribute", "member");
+      .setProperty("ldap.group.objectClass", "group")
+      .setProperty("ldap.group.memberAttribute", "member");
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings, "ldap", null, null);
 
     assertThat(groupMapping.getRequest()).isEqualTo("(&(objectClass=group)(member={0}))");
@@ -55,7 +55,7 @@ public class LdapGroupMappingTest {
   @Test
   public void custom_request() {
     Settings settings = new Settings()
-        .setProperty("ldap.group.request", "(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={uid})(uniqueMember={dn})))");
+      .setProperty("ldap.group.request", "(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={uid})(uniqueMember={dn})))");
     LdapGroupMapping groupMapping = new LdapGroupMapping(settings, "ldap", null, null);
 
     assertThat(groupMapping.getRequest()).isEqualTo("(&(|(objectClass=posixGroup)(objectClass=groupOfUniqueNames))(|(memberUid={0})(uniqueMember={1})))");

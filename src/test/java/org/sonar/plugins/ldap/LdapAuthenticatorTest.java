@@ -21,12 +21,16 @@ package org.sonar.plugins.ldap;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.sonar.api.security.Authenticator.Context;
 import org.sonar.plugins.ldap.server.LdapServer;
 
+import javax.servlet.http.HttpServletRequest;
+
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.sonar.plugins.ldap.LdapSettingsFactory.generateAuthenticationSettings;
 
 public class LdapAuthenticatorTest {
-
   /**
    * A reference to the original ldif file
    */
@@ -35,6 +39,7 @@ public class LdapAuthenticatorTest {
    * A reference to an aditional ldif file.
    */
   public static final String USERS_INFOSUPPORT_COM_LDIF = "/users.infosupport.com.ldif";
+
   @ClassRule
   public static LdapServer exampleServer = new LdapServer(USERS_EXAMPLE_ORG_LDIF);
   @ClassRule
@@ -44,9 +49,9 @@ public class LdapAuthenticatorTest {
   public void testNoConnection() {
     exampleServer.disableAnonymousAccess();
     try {
-      LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
-      LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
-      authenticator.authenticate("godin", "secret1");
+      LdapSettingsManager settingsManager = new LdapSettingsManager(generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
+      LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager);
+      authenticator.doAuthenticate(new Context("godin", "secret1", mock(HttpServletRequest.class)));
     } finally {
       exampleServer.enableAnonymousAccess();
     }
@@ -54,71 +59,71 @@ public class LdapAuthenticatorTest {
 
   @Test
   public void testSimple() {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager);
 
-    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "secret2", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("notfound", "wrong", mock(HttpServletRequest.class)))).isFalse();
     // SONARPLUGINS-2493
-    assertThat(authenticator.authenticate("godin", "")).isFalse();
-    assertThat(authenticator.authenticate("godin", null)).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "", mock(HttpServletRequest.class)))).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", null, mock(HttpServletRequest.class)))).isFalse();
   }
 
   @Test
   public void testSimpleMultiLdap() {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer), new LdapAutodiscovery());
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(generateAuthenticationSettings(exampleServer, infosupportServer), new LdapAutodiscovery());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager);
 
-    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "secret2", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("notfound", "wrong", mock(HttpServletRequest.class)))).isFalse();
     // SONARPLUGINS-2493
-    assertThat(authenticator.authenticate("godin", "")).isFalse();
-    assertThat(authenticator.authenticate("godin", null)).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "", mock(HttpServletRequest.class)))).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", null, mock(HttpServletRequest.class)))).isFalse();
 
     // SONARPLUGINS-2793
-    assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("robby", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("robby", "wrong", mock(HttpServletRequest.class)))).isFalse();
   }
 
   @Test
   public void testSasl() {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(generateAuthenticationSettings(exampleServer, null), new LdapAutodiscovery());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager);
 
-    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "secret2", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("notfound", "wrong", mock(HttpServletRequest.class)))).isFalse();
   }
 
   @Test
   public void testSaslMultipleLdap() {
-    LdapSettingsManager settingsManager = new LdapSettingsManager(LdapSettingsFactory.generateAuthenticationSettings(exampleServer, infosupportServer), new LdapAutodiscovery());
-    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager.getContextFactories(), settingsManager.getUserMappings());
+    LdapSettingsManager settingsManager = new LdapSettingsManager(generateAuthenticationSettings(exampleServer, infosupportServer), new LdapAutodiscovery());
+    LdapAuthenticator authenticator = new LdapAuthenticator(settingsManager);
 
-    assertThat(authenticator.authenticate("godin", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("godin", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("godin", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("tester", "secret2")).isTrue();
-    assertThat(authenticator.authenticate("tester", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "secret2", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("tester", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("notfound", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("notfound", "wrong", mock(HttpServletRequest.class)))).isFalse();
 
-    assertThat(authenticator.authenticate("robby", "secret1")).isTrue();
-    assertThat(authenticator.authenticate("robby", "wrong")).isFalse();
+    assertThat(authenticator.doAuthenticate(new Context("robby", "secret1", mock(HttpServletRequest.class)))).isTrue();
+    assertThat(authenticator.doAuthenticate(new Context("robby", "wrong", mock(HttpServletRequest.class)))).isFalse();
   }
 
 }

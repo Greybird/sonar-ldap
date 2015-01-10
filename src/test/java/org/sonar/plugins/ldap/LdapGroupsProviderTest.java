@@ -146,7 +146,7 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("robby");
     assertThat(groups).containsOnly("sonar-users", "sonar-developers", "linux-users");
   }
-  
+
   @Test
   public void multipleLdapWithExternalGroupsDefaultBehavior() {
     Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
@@ -161,7 +161,7 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("testerinfo");
     assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
   }
-  
+
   @Test
   public void multipleLdapWithExternalGroupsSpecificServer() {
     Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
@@ -177,7 +177,7 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("testerinfo");
     assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
   }
-  
+
   @Test
   public void multipleLdapWithExternalGroupsSpecificListOfServer() {
     Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
@@ -193,6 +193,5 @@ public class LdapGroupsProviderTest {
     groups = groupsProvider.doGetGroups("testerinfo");
     assertThat(groups).containsOnly("sonar-users", "infosupport-cross-users");
   }
-  
-  
+
 }

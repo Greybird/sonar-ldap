@@ -25,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.MessageException;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -138,14 +138,14 @@ public class LdapContextFactory {
    */
   public void testConnection() {
     if (StringUtils.isBlank(username) && isSasl()) {
-      throw new SonarException("When using SASL - property ldap.bindDn is required");
+      throw MessageException.of("When using SASL - property ldap.bindDn is required");
     } else {
       try {
         createBindContext();
         LOG.info("Test LDAP connection on {}: OK", providerUrl);
       } catch (NamingException e) {
         LOG.info("Test LDAP connection: FAIL");
-        throw new SonarException("Unable to open LDAP connection", e);
+        throw new IllegalStateException("Unable to open LDAP connection", e);
       }
     }
   }

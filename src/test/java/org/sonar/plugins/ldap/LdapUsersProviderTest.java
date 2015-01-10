@@ -26,6 +26,7 @@ import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.ldap.server.LdapServer;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.sonar.plugins.ldap.LdapSettingsFactory.generateSimpleAnonymousAccessSettings;
 
 public class LdapUsersProviderTest {
   /**
@@ -44,7 +45,7 @@ public class LdapUsersProviderTest {
 
   @Test
   public void test() throws Exception {
-    Settings settings = LdapSettingsFactory.generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
+    Settings settings = generateSimpleAnonymousAccessSettings(exampleServer, infosupportServer);
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
     LdapUsersProvider usersProvider = new LdapUsersProvider(settingsManager.getContextFactories(), settingsManager.getUserMappings());
 

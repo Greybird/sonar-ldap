@@ -66,8 +66,8 @@ public class LdapUserMapping {
       req = "(&(objectClass=" + objectClass + ")(" + loginAttribute + "={login}))";
       // For backward compatibility with plugin versions lower than 1.2
       LoggerFactory.getLogger(LdapGroupMapping.class)
-          .warn("Properties '" + settingsPrefix + ".user.objectClass' and '" + settingsPrefix + ".user.loginAttribute' are deprecated" +
-            " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
+        .warn("Properties '" + settingsPrefix + ".user.objectClass' and '" + settingsPrefix + ".user.loginAttribute' are deprecated" +
+          " and should be replaced by single property '" + settingsPrefix + ".user.request' with value: " + req);
     } else {
       req = StringUtils.defaultString(settings.getString(settingsPrefix + ".user.request"), DEFAULT_REQUEST);
     }
@@ -80,9 +80,9 @@ public class LdapUserMapping {
    */
   public LdapSearch createSearch(LdapContextFactory contextFactory, String username) {
     return new LdapSearch(contextFactory)
-        .setBaseDn(getBaseDn())
-        .setRequest(getRequest())
-        .setParameters(username);
+      .setBaseDn(getBaseDn())
+      .setRequest(getRequest())
+      .setParameters(username);
   }
 
   /**
@@ -120,11 +120,11 @@ public class LdapUserMapping {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("baseDn", getBaseDn())
-        .add("request", getRequest())
-        .add("realNameAttribute", getRealNameAttribute())
-        .add("emailAttribute", getEmailAttribute())
-        .toString();
+      .add("baseDn", getBaseDn())
+      .add("request", getRequest())
+      .add("realNameAttribute", getRealNameAttribute())
+      .add("emailAttribute", getEmailAttribute())
+      .toString();
   }
 
 }

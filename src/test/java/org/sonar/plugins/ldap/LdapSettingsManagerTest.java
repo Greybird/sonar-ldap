@@ -23,7 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.MessageException;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class LdapSettingsManagerTest {
     settings.removeProperty("ldap.example.url");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(MessageException.class);
     thrown.expectMessage("The property 'ldap.example.url' property is empty while it is mandatory.");
     settingsManager.getContextFactories();
   }
@@ -55,7 +55,7 @@ public class LdapSettingsManagerTest {
     settings.setProperty("ldap.url", "ldap://foo");
     LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(MessageException.class);
     thrown
       .expectMessage("When defining multiple LDAP servers with the property 'ldap.servers', all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     settingsManager.getContextFactories();
@@ -101,7 +101,7 @@ public class LdapSettingsManagerTest {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
       generateAutodiscoverSettings(), ldapAutodiscovery);
 
-    thrown.expect(SonarException.class);
+    thrown.expect(MessageException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and SonarQube is not able to auto-discover any LDAP server.");
 
     settingsManager.getContextFactories();
@@ -147,9 +147,22 @@ public class LdapSettingsManagerTest {
     LdapSettingsManager settingsManager = new LdapSettingsManager(
       new Settings(), new LdapAutodiscovery());
 
-    thrown.expect(SonarException.class);
+    thrown.expect(MessageException.class);
     thrown.expectMessage("The property 'ldap.url' is empty and no realm configured to try auto-discovery.");
     settingsManager.getContextFactories();
+  }
+
+  @Test
+  public void shouldFailWhenReverseProxyEnabledAndNoHeaderNameDefined() throws Exception {
+    Settings settings = generateMultipleLdapSettingsWithUserAndGroupMapping();
+    settings.setProperty("ldap.reverseproxy.enabled", "true");
+    settings.setProperty("ldap.reverseproxy.allowed.host", "aaaa");
+    LdapSettingsManager settingsManager = new LdapSettingsManager(settings, new LdapAutodiscovery());
+
+    thrown.expect(MessageException.class);
+    thrown
+      .expectMessage("Reverse Proxy is enabled but no header name is set");
+    settingsManager.getReverseProxySettings();
   }
 
   private Settings generateMultipleLdapSettingsWithUserAndGroupMapping() {

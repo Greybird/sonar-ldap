@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.MessageException;
 import org.sonar.plugins.ldap.LdapAutodiscovery.LdapSrvRecord;
 
 import java.util.LinkedHashMap;
@@ -47,6 +47,7 @@ public class LdapSettingsManager implements ServerExtension {
   private Map<String, LdapUserMapping> userMappings = null;
   private Map<String, LdapGroupMapping> groupMappings = null;
   private Map<String, LdapContextFactory> contextFactories;
+  private ReverseProxySettings reverseProxySettings = null;
 
   /**
    * Create an instance of the settings manager.
@@ -156,7 +157,7 @@ public class LdapSettingsManager implements ServerExtension {
       LOG.info("Auto discovery mode");
       List<LdapSrvRecord> ldapServers = ldapAutodiscovery.getLdapServers(realm);
       if (ldapServers.isEmpty()) {
-        throw new SonarException(String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.", ldapUrlKey));
+        throw MessageException.of(String.format("The property '%s' is empty and SonarQube is not able to auto-discover any LDAP server.", ldapUrlKey));
       }
       int index = 1;
       for (LdapSrvRecord ldapSrvRecord : ldapServers) {
@@ -169,7 +170,7 @@ public class LdapSettingsManager implements ServerExtension {
       }
     } else {
       if (StringUtils.isBlank(ldapUrl)) {
-        throw new SonarException(String.format("The property '%s' is empty and no realm configured to try auto-discovery.", ldapUrlKey));
+        throw MessageException.of(String.format("The property '%s' is empty and no realm configured to try auto-discovery.", ldapUrlKey));
       }
       LdapContextFactory contextFactory = new LdapContextFactory(settings, LDAP_PROPERTY_PREFIX, ldapUrl);
       contextFactories.put(DEFAULT_LDAP_SERVER_KEY, contextFactory);
@@ -178,7 +179,7 @@ public class LdapSettingsManager implements ServerExtension {
 
   private void initMultiLdapConfiguration(String[] serverKeys) {
     if (settings.hasKey("ldap.url") || settings.hasKey("ldap.realm")) {
-      throw new SonarException("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
+      throw MessageException.of("When defining multiple LDAP servers with the property '" + LDAP_SERVERS_PROPERTY + "', "
         + "all LDAP properties must be linked to one of those servers. Please remove properties like 'ldap.url', 'ldap.realm', ...");
     }
     for (String serverKey : serverKeys) {
@@ -186,10 +187,17 @@ public class LdapSettingsManager implements ServerExtension {
       String ldapUrlKey = prefix + ".url";
       String ldapUrl = settings.getString(ldapUrlKey);
       if (StringUtils.isBlank(ldapUrl)) {
-        throw new SonarException(String.format("The property '%s' property is empty while it is mandatory.", ldapUrlKey));
+        throw MessageException.of(String.format("The property '%s' property is empty while it is mandatory.", ldapUrlKey));
       }
       LdapContextFactory contextFactory = new LdapContextFactory(settings, prefix, ldapUrl);
       contextFactories.put(serverKey, contextFactory);
     }
+  }
+
+  public ReverseProxySettings getReverseProxySettings() {
+    if (reverseProxySettings == null) {
+      reverseProxySettings = new ReverseProxySettings(settings);
+    }
+    return reverseProxySettings;
   }
 }

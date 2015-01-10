@@ -20,7 +20,9 @@
 
 package org.sonar.plugins.ldap;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import org.sonar.api.Extension;
+
 import org.sonar.api.SonarPlugin;
 
 import java.util.List;
@@ -31,9 +33,15 @@ import java.util.List;
 public class LdapPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return ImmutableList.of(LdapRealm.class,
-      LdapSettingsManager.class,
-      LdapAutodiscovery.class);
-  }
+    final List<Class<? extends Extension>> extensions = Lists.newArrayList();
+    extensions.add(LdapRealm.class);
+    extensions.add(LdapSettingsManager.class);
+    extensions.add(LdapAutodiscovery.class);
+    try {
+      extensions.add(ReverseProxyFilter.class);
+    } catch (NoClassDefFoundError e) {
 
+    }
+    return extensions;
+  }
 }

@@ -28,6 +28,7 @@ import javax.naming.NamingException;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+
 import java.util.Arrays;
 
 /**
@@ -155,12 +156,12 @@ public class LdapSearch {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("baseDn", baseDn)
-        .add("scope", scopeToString())
-        .add("request", request)
-        .add("parameters", Arrays.toString(parameters))
-        .add("attributes", Arrays.toString(returningAttributes))
-        .toString();
+      .add("baseDn", baseDn)
+      .add("scope", scopeToString())
+      .add("request", request)
+      .add("parameters", Arrays.toString(parameters))
+      .add("attributes", Arrays.toString(returningAttributes))
+      .toString();
   }
 
   private String scopeToString() {

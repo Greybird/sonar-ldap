@@ -23,7 +23,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalGroupsProvider;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.MessageException;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -60,7 +60,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
   public Collection<String> doGetGroups(String username) {
     checkPrerequisites(username);
     Set<String> groups = Sets.newHashSet();
-    List<SonarException> sonarExceptions = new ArrayList<SonarException>();
+    List<IllegalStateException> sonarExceptions = new ArrayList<IllegalStateException>();
     for (String serverKey : userMappings.keySet()) {
       if (!groupMappings.containsKey(serverKey)) {
         // No group mapping for this ldap instance.
@@ -71,25 +71,25 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
       if (searchResult != null) {
         try {
           String[] serverKeysForGroup = groupMappings
-              .get(serverKey)
-              .getGroupRequestServersOverride();
+            .get(serverKey)
+            .getGroupRequestServersOverride();
           if (serverKeysForGroup == null) {
-            serverKeysForGroup = new String[] { serverKey };
+            serverKeysForGroup = new String[] {serverKey};
           }
-          for(String serverKeyForGroup : serverKeysForGroup)
+          for (String serverKeyForGroup : serverKeysForGroup)
           {
             NamingEnumeration<SearchResult> result = groupMappings
-                .get(serverKeyForGroup)
-                .createSearch(contextFactories.get(serverKeyForGroup), searchResult)
-                .find();
-              groups.addAll(mapGroups(serverKey, result));
+              .get(serverKeyForGroup)
+              .createSearch(contextFactories.get(serverKeyForGroup), searchResult)
+              .find();
+            groups.addAll(mapGroups(serverKey, result));
           }
           // if no exceptions occur, we found the user and his groups and mapped his details.
           break;
         } catch (NamingException e) {
           // just in case if Sonar silently swallowed exception
           LOG.debug(e.getMessage(), e);
-          sonarExceptions.add(new SonarException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
+          sonarExceptions.add(new IllegalStateException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
         }
       } else {
         // user not found
@@ -100,7 +100,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     return groups;
   }
 
-  private void checkResults(Set<String> groups, List<SonarException> sonarExceptions) {
+  private void checkResults(Set<String> groups, List<IllegalStateException> sonarExceptions) {
     if (groups.isEmpty() && !sonarExceptions.isEmpty()) {
       // No groups found and there is an exception so there is a reason the user could not be found.
       throw sonarExceptions.iterator().next();
@@ -109,11 +109,11 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
 
   private void checkPrerequisites(String username) {
     if (userMappings.isEmpty() || groupMappings.isEmpty()) {
-      throw new SonarException("Unable to retrieve details for user " + username + ": No user or group mapping found.");
+      throw MessageException.of("Unable to retrieve details for user " + username + ": No user or group mapping found.");
     }
   }
 
-  private SearchResult searchUserGroups(String username, List<SonarException> sonarExceptions, String serverKey) {
+  private SearchResult searchUserGroups(String username, List<IllegalStateException> sonarExceptions, String serverKey) {
     SearchResult searchResult = null;
     try {
       LOG.debug("Requesting groups for user {}", username);
@@ -124,7 +124,7 @@ public class LdapGroupsProvider extends ExternalGroupsProvider {
     } catch (NamingException e) {
       // just in case if Sonar silently swallowed exception
       LOG.debug(e.getMessage(), e);
-      sonarExceptions.add(new SonarException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
+      sonarExceptions.add(new IllegalStateException("Unable to retrieve groups for user " + username + " in " + serverKey, e));
     }
     return searchResult;
   }

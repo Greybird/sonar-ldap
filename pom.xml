@@ -4,11 +4,11 @@
   <parent>
     <groupId>org.codehaus.sonar-plugins</groupId>
     <artifactId>parent</artifactId>
-    <version>16</version>
+    <version>19</version>
   </parent>
 
   <artifactId>sonar-ldap-plugin</artifactId>
-  <version>1.5-SNAPSHOT</version>
+  <version>1.4.1-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar LDAP Plugin</name>
@@ -57,7 +57,7 @@
   </ciManagement>
 
   <properties>
-    <sonar.version>3.0</sonar.version>
+    <sonar.version>4.5</sonar.version>
     <sonar.pluginName>LDAP</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.ldap.LdapPlugin</sonar.pluginClass>
 
@@ -136,6 +136,11 @@
         <scope>test</scope>
     </dependency>
     -->
+    <dependency>
+    	<groupId>javax.servlet</groupId>
+    	<artifactId>servlet-api</artifactId>
+    	<version>2.5</version>
+    </dependency>
   </dependencies>
 
 </project>

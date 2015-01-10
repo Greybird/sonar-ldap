@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
-import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.MessageException;
 
 import javax.annotation.Nullable;
 import javax.naming.NamingException;
@@ -64,20 +64,20 @@ public class LdapUsersProvider extends ExternalUsersProvider {
     if (userMappings.isEmpty()) {
       String errorMessage = "Unable to retrieve details for user " + username + ": No user mapping found.";
       LOG.debug(errorMessage);
-      throw new SonarException(errorMessage);
+      throw MessageException.of(errorMessage);
     }
     UserDetails details = null;
-    SonarException sonarException = null;
+    IllegalStateException sonarException = null;
     for (String serverKey : userMappings.keySet()) {
       SearchResult searchResult = null;
       try {
         searchResult = userMappings.get(serverKey).createSearch(contextFactories.get(serverKey), username)
-            .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
-            .findUnique();
+          .returns(userMappings.get(serverKey).getEmailAttribute(), userMappings.get(serverKey).getRealNameAttribute())
+          .findUnique();
       } catch (NamingException e) {
         // just in case if Sonar silently swallowed exception
         LOG.debug(e.getMessage(), e);
-        sonarException = new SonarException("Unable to retrieve details for user " + username + " in " + serverKey, e);
+        sonarException = new IllegalStateException("Unable to retrieve details for user " + username + " in " + serverKey, e);
       }
       if (searchResult != null) {
         try {
@@ -87,7 +87,7 @@ public class LdapUsersProvider extends ExternalUsersProvider {
         } catch (NamingException e) {
           // just in case if Sonar silently swallowed exception
           LOG.debug(e.getMessage(), e);
-          sonarException = new SonarException("Unable to retrieve details for user " + username + " in " + serverKey, e);
+          sonarException = new IllegalStateException("Unable to retrieve details for user " + username + " in " + serverKey, e);
         }
       } else {
         // user not found

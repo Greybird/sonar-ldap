@@ -50,8 +50,14 @@ import org.apache.mina.util.AvailablePortFinder;
 
 import javax.annotation.WillClose;
 import javax.naming.Context;
-import javax.naming.directory.*;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.ModificationItem;
 import javax.naming.ldap.InitialLdapContext;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
@@ -65,9 +71,9 @@ public class ApacheDS {
 
   public static ApacheDS start(String realm, String baseDn) throws Exception {
     return new ApacheDS(realm, baseDn)
-        .startDirectoryService()
-        .startLdapServer()
-        .activateNis();
+      .startDirectoryService()
+      .startLdapServer()
+      .activateNis();
   }
 
   public void stop() throws Exception {
@@ -132,11 +138,11 @@ public class ApacheDS {
     JdbmPartition partition = new JdbmPartition();
     partition.setId("test");
     partition.setSuffix(baseDn);
-    partition.setIndexedAttributes(Sets.<Index<?, ServerEntry>> newHashSet(
-        new JdbmIndex<String, ServerEntry>("ou"),
-        new JdbmIndex<String, ServerEntry>("uid"),
-        new JdbmIndex<String, ServerEntry>("dc"),
-        new JdbmIndex<String, ServerEntry>("objectClass")));
+    partition.setIndexedAttributes(Sets.<Index<?, ServerEntry>>newHashSet(
+      new JdbmIndex<String, ServerEntry>("ou"),
+      new JdbmIndex<String, ServerEntry>("uid"),
+      new JdbmIndex<String, ServerEntry>("dc"),
+      new JdbmIndex<String, ServerEntry>("objectClass")));
     directoryService.setPartitions(Sets.newHashSet(partition));
 
     directoryService.startup();
@@ -223,7 +229,7 @@ public class ApacheDS {
       new ModificationItem(DirContext.ADD_ATTRIBUTE, disabled2)
     };
 
-    Hashtable env = new Hashtable();
+    Hashtable<String, String> env = new Hashtable<String, String>();
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
     env.put(Context.PROVIDER_URL, getUrl());
 

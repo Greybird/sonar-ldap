@@ -44,9 +44,9 @@ public class LdapUserMappingTest {
   @Test
   public void activeDirectory() {
     Settings settings = new Settings()
-        .setProperty("ldap.user.baseDn", "cn=users")
-        .setProperty("ldap.user.objectClass", "user")
-        .setProperty("ldap.user.loginAttribute", "sAMAccountName");
+      .setProperty("ldap.user.baseDn", "cn=users")
+      .setProperty("ldap.user.objectClass", "user")
+      .setProperty("ldap.user.loginAttribute", "sAMAccountName");
 
     LdapUserMapping userMapping = new LdapUserMapping(settings, "ldap");
     LdapSearch search = userMapping.createSearch(null, "tester");
@@ -65,9 +65,9 @@ public class LdapUserMappingTest {
   @Test
   public void realm() {
     Settings settings = new Settings()
-        .setProperty("ldap.realm", "example.org")
-        .setProperty("ldap.userObjectClass", "user")
-        .setProperty("ldap.loginAttribute", "sAMAccountName");
+      .setProperty("ldap.realm", "example.org")
+      .setProperty("ldap.userObjectClass", "user")
+      .setProperty("ldap.loginAttribute", "sAMAccountName");
 
     LdapUserMapping userMapping = new LdapUserMapping(settings, "ldap");
     assertThat(userMapping.getBaseDn()).isEqualTo("dc=example,dc=org");
